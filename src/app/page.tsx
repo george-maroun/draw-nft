@@ -1,113 +1,263 @@
-import Image from "next/image";
+"use client"
+
+import { useRef, useState } from 'react';
+import axios from 'axios';
+import { useAccount, useSignMessage, useWriteContract, useWaitForTransactionReceipt, type BaseError } from 'wagmi'
+import { abi } from '../../lib/abi/abi'
 
 export default function Home() {
+  // Canvas reference
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [drawing, setDrawing] = useState(false);
+
+  // Brush settings
+  const [brushColor, setBrushColor] = useState('#000000');
+  const [brushSize, setBrushSize] = useState(10);
+
+  const [isFormVisible, setFormVisible] = useState(false); // Control form visibility
+  const [formData, setFormData] = useState({ name: "", description: "" }); // Store form data
+
+  const { address, isConnecting, isDisconnected } = useAccount()
+  console.log('address:', address)
+  console.log('isConnecting:', isConnecting)
+
+  const { signMessage } = useSignMessage()
+  const { 
+    data: hash,
+    error, 
+    isPending, 
+    writeContract 
+  } = useWriteContract() 
+
+  // Get canvas context
+  const getContext = () => {
+    const canvas = canvasRef.current;
+    return canvas ? canvas.getContext('2d') : null;
+  };
+
+  // Function to get canvas content as data URL
+  const getCanvasImage = () => {
+    const canvas = canvasRef.current;
+    return canvas ? canvas.toDataURL("image/png") : "";
+  };
+
+  const mintImage = async () => {
+    const imageData = getCanvasImage();
+    const base64Data = imageData.split(",")[1]; // Get base64 content
+    if (!address) {
+      console.error("No address found");
+      return;
+    }
+    // read balance
+
+    let ipfsHash = '';
+    try {
+      const response = await axios.post(
+        "/api/imageStorage",
+        { 
+          image: base64Data, 
+          name: formData.name, 
+          description: formData.description},
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      ipfsHash = response.data.ipfsHash;
+      console.log("Image stored successfully:", response.data);
+      console.log("IPFS Hash:", ipfsHash);
+    } catch (error) {
+      console.error("Error storing image:", error);
+    }
+
+    const mintArgs = {
+      address: address,
+      ipfsHash: `ipfs://${ipfsHash}`,
+    };
+
+    console.log("Minting NFT with args:", mintArgs);
+    
+    try {
+      const tx = await writeContract({ 
+        abi,
+        address: '0xf30e2246a53d1264ACe657A99Db2Ba737FFE7482',
+        functionName: 'safeMint',
+        args: [
+          mintArgs.address,
+          mintArgs.ipfsHash,
+        ],
+        // overrides: {
+        //   gasLimit: ethers.utils.hexlify(1000000), // Adjust this value as needed
+        // },
+      });
+      console.log("Transaction initiated:", tx);
+    } catch (error) {
+      console.error("Error executing writeContract:", error);
+    }
+  };
+
+  // Start drawing
+  const startDrawing = (event: React.MouseEvent<HTMLCanvasElement>) => {
+    setDrawing(true);
+    const ctx = getContext();
+    if (ctx) {
+      ctx.strokeStyle = brushColor;
+      ctx.lineWidth = brushSize;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(event.nativeEvent.offsetX, event.nativeEvent.offsetY);
+    }
+  };
+
+  // Draw on canvas
+  const draw = (event: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!drawing) return;
+
+    const ctx = getContext();
+    if (ctx) {
+      ctx.lineTo(event.nativeEvent.offsetX, event.nativeEvent.offsetY);
+      ctx.stroke();
+    }
+  };
+
+  // Stop drawing
+  const stopDrawing = () => {
+    setDrawing(false);
+    const ctx = getContext();
+    if (ctx) {
+      ctx.closePath();
+    }
+  };
+
+  // Clear canvas
+  const clearCanvas = () => {
+    const ctx = getContext();
+    if (ctx) {
+      ctx.clearRect(0, 0, canvasRef.current!.width, canvasRef.current!.height);
+    }
+  };
+
+  const handleFormChange = (e:any) => {
+    const { name, value } = e.target;
+    setFormData((prevData) => ({
+      ...prevData,
+      [name]: value,
+    }));
+  };
+
+  const toggleFormVisibility = () => {
+    setFormVisible(!isFormVisible); // Toggle form visibility
+  };
+
+
+
+  const { isLoading: isConfirming, isSuccess: isConfirmed } = 
+    useWaitForTransactionReceipt({ 
+      hash, 
+    }) 
+
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="z-10 w-full max-w-5xl items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">src/app/page.tsx</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:size-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{" "}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
+    <main className='pt-4 flex flex-col items-center font-inter'>
+      <div className='absolute top-4 right-4'>
+        <w3m-button />
       </div>
-
-      <div className="relative z-[-1] flex place-items-center before:absolute before:h-[300px] before:w-full before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-full after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 sm:before:w-[480px] sm:after:w-[240px] before:lg:h-[360px]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
+      <h1 className='text-5xl text-blue-700 font-semibold mb-6 font-fredoka'>Paint ! 🎨</h1>
+      {/* <div>{address}</div>
+      <div>{isConnecting && 'Connecting...'}</div>
+      <div>{isDisconnected && 'Disconnected'}</div> */}
+      <div className='flex flex-col items-center' style={{maxWidth: "350px"}}>
+        
+        <canvas
+          ref={canvasRef}
+          width={350}
+          height={350}
+          onMouseDown={startDrawing}
+          onMouseMove={draw}
+          onMouseUp={stopDrawing}
+          style={{ border: '1px solid #dddddd'}}
         />
+
+        <div className='mb-4 mt-4 flex flex-col gap-4'>
+          <div className='flex flex-row items-center gap-3'>
+            <div className='flex flex-row items-center'>
+              <label htmlFor="brushColor">Brush Color:</label>
+              <input
+                type="color"
+                id="brushColor"
+                value={brushColor}
+                onChange={(e) => setBrushColor(e.target.value)}
+                style={{ width: '25px', height: '30px', background: 'none', border: 'none'}}
+              />
+            </div>
+            <div className='flex flex-row items-center gap-1'>
+              <label htmlFor="brushSize">Brush Size:</label>
+              <input
+                type="range"
+                id="brushSize"
+                min="1"
+                max="100"
+                value={brushSize}
+                onChange={(e) => setBrushSize(parseInt(e.target.value))}
+              />
+            </div>
+          </div>
+          <div className='flex flex-row items-center justify-between'>
+            <button className='bg-slate-200 p-1 w-40' onClick={clearCanvas}>
+              Clear Canvas
+            </button>
+
+            <button className='bg-slate-200 p-1 w-40' onClick={toggleFormVisibility}>
+              Mint
+            </button>
+          </div>
+        </div>
+        {isFormVisible && (
+          <div className="form">
+            <h3 className="text-2xl text-blue-700 font-semibold mb-6">Mint Form</h3>
+            <div className="mb-4">
+              <label htmlFor="name">Name:</label>
+              <input
+                type="text"
+                id="name"
+                name="name"
+                value={formData.name}
+                onChange={handleFormChange}
+                className="border p-2"
+              />
+            </div>
+            <div className="mb-4">
+              <label htmlFor="description">Description:</label>
+              <input
+                type="text"
+                id="description"
+                name="description"
+                value={formData.description}
+                onChange={handleFormChange}
+                className="border p-2"
+              />
+            </div>
+            <button 
+              className='bg-slate-200 p-1 w-40'
+              disabled={isPending} 
+              onClick={mintImage}
+            >
+              {isPending ? 'Confirming...' : 'Mint'} 
+            </button>
+            {hash && <div>Transaction Hash: {hash}</div>}
+            {isConfirming && <div>Waiting for confirmation...</div>} 
+            {isConfirmed && <div>Transaction confirmed.</div>} 
+            {error && ( 
+              <div>Error: {(error as BaseError).shortMessage || error.message}</div> 
+            )} 
+          </div>
+        )}
       </div>
-
-      <div className="mb-32 grid text-center lg:mb-0 lg:w-full lg:max-w-5xl lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Docs{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Learn{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Templates{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            Explore starter templates for Next.js.
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Deploy{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-balance text-sm opacity-50">
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
+      <div className='h-44'>
       </div>
     </main>
   );
 }
+
+
