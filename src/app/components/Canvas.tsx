@@ -68,6 +68,11 @@ export default function Canvas({
     }
   };
 
+  const clearCanvas = () => {
+    initializeBackground(); // Clear and re-fill with white
+    onClearCanvas(); // Any other clear-related logic
+  };
+
   const onMouseDown = (event: MouseEvent<HTMLCanvasElement>) => {
     startDrawing(event.nativeEvent.offsetX, event.nativeEvent.offsetY);
   };
@@ -135,7 +140,7 @@ export default function Canvas({
 
         <button 
           className='bg-slate-400 text-white text-sm p-2 w-32 font-semibold rounded-full' 
-          onClick={onClearCanvas}
+          onClick={clearCanvas}
         >
           Clear Canvas
         </button>
