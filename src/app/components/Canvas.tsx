@@ -1,4 +1,4 @@
-import { useRef, useState, TouchEvent, MouseEvent } from 'react';
+import { useRef, useState, TouchEvent, MouseEvent, useEffect } from 'react';
 
 interface CanvasProps {
   width: number;
@@ -26,6 +26,18 @@ export default function Canvas({
     const canvas = canvasRef.current;
     return canvas ? canvas.getContext('2d') : null;
   };
+
+  const initializeBackground = () => {
+    const ctx = getContext();
+    if (ctx) {
+      ctx.fillStyle = 'white';
+      ctx.fillRect(0, 0, width, height); // Fill entire canvas with white
+    }
+  };
+
+  useEffect(() => {
+    initializeBackground(); // Initialize the canvas with a white background
+  }, []); // Run once on mount
 
   const startDrawing = (x: number, y: number) => {
     setDrawing(true);
@@ -96,7 +108,7 @@ export default function Canvas({
         onTouchEnd={stopDrawing}
         className='rounded-xl border border-gray-200'
       />
-      <div className='flex flex-row items-center gap-3 text-sm'>
+      <div className='flex flex-row items-center gap-3 text-sm lg:p-0 p-4'>
         <div className='flex flex-row items-center'>
           <label htmlFor="brushColor">Brush Color:</label>
           <input

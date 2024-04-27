@@ -286,7 +286,7 @@ export default function Home() {
   const [brushSize, setBrushSize] = useState(10);
 
   // Width and height of the canvas (it's a square canvas)
-  const CANVAS_SIZE = 450;
+  const CANVAS_SIZE = 390;
 
   const { 
     data: hash,
@@ -348,7 +348,7 @@ export default function Home() {
         }
       );
       ipfsHash = response.data.ipfsHash;
-      console.log("Image stored successfully:", response.data);
+      // console.log("Image stored successfully:", response.data);
     } catch (err) {
 
       console.log('Error storing image:', err);
@@ -371,20 +371,20 @@ export default function Home() {
 
   return (
     <main className='pt-4 pb-4 flex flex-col items-center font-inter text-sm'>
-      <div className='flex flex-col items-center p-10 pt-5 w-4/5 bg-white relative rounded-2xl'>
+      <div className='flex flex-col items-center lg:p-10 pt-5 lg:w-4/5 w-full bg-white relative rounded-2xl'>
         <div className='absolute top-4 right-4'>
           <w3m-button />
         </div>
         
         <div className='flex flex-col gap-3'>
-          <div>
+          <div className='lg:p-0 p-4'>
             <div className='text-sm mb-6 italic'>
               @PaintOnBase 🎨
             </div>
             <h1 className='text-2xl font-semibold mb-2'>Create an NFT</h1>
             <p className='text-sm'>Once the item is minted, you will be able to see it on OpenSea</p>
           </div>
-          <div className='flex flex-row gap-10'>
+          <div className='flex lg:flex-row flex-col gap-10'>
             <Canvas
               width={CANVAS_SIZE}
               height={CANVAS_SIZE}
@@ -399,22 +399,24 @@ export default function Home() {
                 }
               }}
             />
-
-            <MintForm
-              address={address}
-              formData={formData}
-              handleFormChange={handleFormChange}
-              mintImage={mintImage}
-              isPending={isPending}
-              hash={hash}
-              isConfirming={isConfirming}
-              isConfirmed={isConfirmed}
-              error={error}
-            />
+            <div className='lg:p-0 p-4'>
+              <MintForm
+                address={address}
+                formData={formData}
+                handleFormChange={handleFormChange}
+                mintImage={mintImage}
+                isPending={isPending}
+                hash={hash}
+                isConfirming={isConfirming}
+                isConfirmed={isConfirmed}
+                error={error}
+              />
+            </div>
+            
           </div>
         </div>
       </div>
-      <div className='h-32'>
+      <div className='lg:h-32 h-16'>
       </div>
     </main>
   );

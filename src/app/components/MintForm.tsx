@@ -8,11 +8,13 @@ export interface IMintFormProps {
   mintImage: () => void;
 }
 
-const Message = ({ children }: { children: React.ReactNode }) => {
+const Message = ({message, url}: any) => {
   return (
-    <div className='p-3 bg-slate-200 rounded-lg flex flex-row gap-2 items-center mb-2'>
+    <div className='p-3 bg-slate-100 rounded-lg flex flex-row gap-2 items-center mb-2'>
       <IoInformationCircleOutline />
-      <div className='max-w-72 text-wrap'>{children}</div>
+      <div className=''>
+        {url ? <a href={url} target='_blank'>{message}</a> : message}
+      </div>
     </div>
   );
 }
@@ -40,7 +42,7 @@ export default function MintForm({
           value={formData.name}
           onChange={handleFormChange}
           placeholder='Name your NFT...'
-          className="border p-2 rounded-lg w-72 max-w-72 border-gray-200 focus:border-slate-200"
+          className="border p-2 rounded-lg lg:w-72 lg:max-w-72 w-full border-gray-200 focus:border-slate-200"
         />
       </div>
 
@@ -52,26 +54,25 @@ export default function MintForm({
           value={formData.description}
           onChange={handleFormChange}
           placeholder='Enter a description'
-          className="border p-2 rounded-lg w-72 max-w-72 h-32 border-gray-200 focus:border-slate-200"
+          className="border p-2 rounded-lg lg:w-72 lg:max-w-72 w-full h-32 border-gray-200 focus:border-slate-200"
         />
       </div>
 
-      <div className='flex justify-end mb-8'>
+      <div className='flex lg:justify-end justify-center mb-8'>
         <button 
-          className='bg-gradient-to-r from-[#87FF5D] to-[#469BFF] p-2 w-32 text-sm font-semibold rounded-full text-white'
+          className='bg-gradient-to-r from-[#87FF5D] to-[#469BFF] p-2 w-32 text-sm font-semibold rounded-full text-white disabled:opacity-70'
           disabled={isPending || !address}
           onClick={mintImage}
         >
           {isPending ? 'Confirming...' : 'Mint'}
         </button>
       </div>
-      
-      {hash && <Message>Transaction hash: {hash}</Message>}
-      {isConfirming && <Message>Waiting for confirmation...</Message>}
-      {isConfirmed && <Message>Transaction confirmed.</Message>}
-      {error && <Message>Error: {(error as BaseError).shortMessage || error.message}</Message>}
- 
-      
+      {!address && <Message message='Connect your wallet to mint an NFT'/>}
+      {hash && <Message message='View transaction on BaseScan' url={`https://sepolia.basescan.org/tx/${hash}`}/>}
+      {isConfirming && <Message message='Waiting for confirmation...'/>}
+      {isConfirmed && <Message message='Transaction confirmed'/>}
+      {error && <Message message={`Error: ${(error as BaseError).shortMessage || error.message}`}/>}
+      <div className='h-6'></div>
     </div>
   );
 }
