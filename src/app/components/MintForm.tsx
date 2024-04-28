@@ -13,7 +13,7 @@ const Message = ({message, url}: any) => {
     <div className='p-3 bg-slate-100 rounded-lg flex flex-row gap-2 items-center mb-2'>
       <IoInformationCircleOutline />
       <div className=''>
-        {url ? <a href={url} target='_blank'>{message}</a> : message}
+        {url ? <a className="text-sky-900" href={url} target='_blank'>{message}</a> : message}
       </div>
     </div>
   );

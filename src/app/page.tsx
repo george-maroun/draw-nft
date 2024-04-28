@@ -93,7 +93,7 @@ export default function Home() {
         }
       );
       ipfsHash = response.data.ipfsHash;
-      // console.log("Image stored successfully:", response.data);
+      console.log("Image stored successfully:", response.data);
     } catch (err) {
 
       console.log('Error storing image:', err);
