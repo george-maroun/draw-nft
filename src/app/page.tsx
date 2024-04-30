@@ -28,7 +28,7 @@ export default function Home() {
     windowWidth = window.innerWidth;
   }
   // Width and height of the canvas (it's a square canvas)
-  const CANVAS_SIZE = windowWidth < 450 ? 390 : 450;
+  const CANVAS_SIZE = windowWidth < 450 ? 373 : 450;
   const NFT_CONTRACT_ADDRESS = '0xCb32931000319F4d6183B3e5D5940e997e2caF14';
 
   const { 
@@ -115,14 +115,14 @@ export default function Home() {
   };
 
   return (
-    <main className='pt-4 pb-4 flex flex-col items-center font-inter text-sm'>
-      <div className='flex flex-col items-center lg:p-10 pt-5 lg:w-4/5 w-full bg-white relative rounded-2xl'>
+    <main className='pt-8 pb-4 flex flex-col items-center font-inter text-sm'>
+      <div className='flex flex-col items-center lg:p-10 pt-5 lg:w-4/5 w-full bg-white relative rounded-3xl'>
         <div className='absolute top-4 right-4'>
           <w3m-button />
         </div>
         
         <div className='flex flex-col gap-3'>
-          <div className='lg:p-0 p-4'>
+          <div className='lg:p-0 p-5'>
             <div className='text-sm mb-6 italic'>
               @PaintOnBase 🎨
             </div>
@@ -144,7 +144,7 @@ export default function Home() {
                 }
               }}
             />
-            <div className='lg:p-0 p-4'>
+            <div className='lg:p-0 p-5 pt-0 lg:pt-0'>
               <MintForm
                 address={address}
                 formData={formData}
@@ -160,9 +160,29 @@ export default function Home() {
             
           </div>
         </div>
+        <div className=' h-6'></div>
+        
       </div>
-      <div className='lg:h-32 h-16'>
+      <div className=' h-6'>
       </div>
+
+      {/* <div className='flex flex-col items-center lg:p-16 pt-5 lg:w-4/5 w-full bg-white relative rounded-2xl'>
+      <div>
+          <h1 className='text-2xl font-semibold mb-2'>Gallery 🎨</h1>
+          <p className='text-sm mb-4'>Discover what others have created</p>
+
+          <div className="flex flex-col gap-2">
+          {[...Array(3)].map((_, rowIndex) => (
+            <div key={rowIndex} className="flex gap-2">
+              {[...Array(3)].map((_, colIndex) => (
+                <div key={`${rowIndex}-${colIndex}`} className="w-64 h-64 bg-gray-200 rounded-lg"></div>
+              ))}
+            </div>
+            ))}
+          </div>
+          
+        </div>
+      </div> */}
     </main>
   );
 }

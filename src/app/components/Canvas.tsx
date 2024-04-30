@@ -1,4 +1,7 @@
-import { useRef, useState, TouchEvent, MouseEvent, useEffect } from 'react';
+import { useRef, useState, TouchEvent, MouseEvent, useEffect, useCallback } from 'react';
+import Slider from '@mui/material/Slider';
+import Box from '@mui/material/Box';
+import { MdUndo, MdOutlineRedo } from "react-icons/md";
 
 interface CanvasProps {
   width: number;
@@ -20,84 +23,138 @@ export default function Canvas({
   onClearCanvas,
 }: CanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [drawing, setDrawing] = useState(false);
+  const drawing = useRef(false); // Use useRef to avoid re-renders
+  const lastPoint = useRef({ x: 0, y: 0 }); // Track the last point for smoother drawing
 
-  const getContext = () => {
+
+  // History for undo and redo
+  const [history, setHistory] = useState<string[]>([]);
+  const [historyIndex, setHistoryIndex] = useState(-1);
+
+  const getContext = useCallback(() => {
     const canvas = canvasRef.current;
     return canvas ? canvas.getContext('2d') : null;
-  };
+  }, []);
 
-  const initializeBackground = () => {
+  const saveToHistory = useCallback(() => {
+    const ctx = getContext();
+    if (ctx && canvasRef.current) {
+      const dataUrl = canvasRef.current.toDataURL();
+      const newHistory = history.slice(0, historyIndex + 1);
+      newHistory.push(dataUrl);
+      setHistory(newHistory);
+      setHistoryIndex(newHistory.length - 1);
+    }
+  }, [getContext, history, historyIndex]);
+
+  const initializeBackground = useCallback(() => {
     const ctx = getContext();
     if (ctx) {
       ctx.fillStyle = 'white';
-      ctx.fillRect(0, 0, width, height); // Fill entire canvas with white
+      ctx.fillRect(0, 0, width, height);
     }
-  };
+  }, [getContext, width, height]);
 
   useEffect(() => {
-    initializeBackground(); // Initialize the canvas with a white background
-  }, []); // Run once on mount
+    initializeBackground();
+    const ctx = getContext();
+    if (ctx) {
+      const dataUrl = canvasRef.current!.toDataURL(); // Capture the initial state
+      setHistory([dataUrl]); // Initialize history with the blank canvas
+      setHistoryIndex(0);
+    }
+  }, [initializeBackground, getContext]);
 
-  const startDrawing = (x: number, y: number) => {
-    setDrawing(true);
+  const drawLine = useCallback((x1:number, y1:number, x2:number, y2:number) => {
     const ctx = getContext();
     if (ctx) {
       ctx.strokeStyle = brushColor;
       ctx.lineWidth = brushSize;
       ctx.lineCap = 'round';
       ctx.beginPath();
-      ctx.moveTo(x, y);
-    }
-  };
-
-  const continueDrawing = (x: number, y: number) => {
-    if (!drawing) return;
-    const ctx = getContext();
-    if (ctx) {
-      ctx.lineTo(x, y);
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
       ctx.stroke();
     }
-  };
+  }, [getContext, brushColor, brushSize]);
 
-  const stopDrawing = () => {
-    setDrawing(false);
+
+
+  const undo = useCallback(() => {
+    if (historyIndex > 0) {
+      setHistoryIndex(historyIndex - 1);
+    }
+  }, [historyIndex]);
+
+  const redo = useCallback(() => {
+    if (historyIndex < history.length - 1) {
+      setHistoryIndex(historyIndex + 1);
+    }
+  }, [historyIndex, history.length]);
+
+  const applyHistoryImage = useCallback(() => {
     const ctx = getContext();
     if (ctx) {
-      ctx.closePath();
+      const img = new Image();
+      img.src = history[historyIndex];
+      img.onload = () => {
+        ctx.clearRect(0, 0, width, height);
+        ctx.drawImage(img, 0, 0, width, height);
+      };
     }
-  };
+  }, [getContext, history, historyIndex, width, height]);
 
-  const clearCanvas = () => {
-    initializeBackground(); // Clear and re-fill with white
-    onClearCanvas(); // Any other clear-related logic
-  };
+  useEffect(() => {
+    applyHistoryImage();
+  }, [historyIndex, applyHistoryImage]);
 
-  const onMouseDown = (event: MouseEvent<HTMLCanvasElement>) => {
+  const startDrawing = useCallback((x: number, y: number) => {
+    drawing.current = true;
+    lastPoint.current = { x, y };
+  }, []);
+
+  const continueDrawing = useCallback((x: number, y: number) => {
+    if (drawing.current) {
+      drawLine(lastPoint.current.x, lastPoint.current.y, x, y); // Draw from last point to current
+      lastPoint.current = { x, y }; // Update last point
+    }
+  }, [drawLine]);
+
+  const stopDrawing = useCallback(() => {
+    saveToHistory();
+    drawing.current = false;
+  }, [saveToHistory]);
+
+  const clearCanvas = useCallback(() => {
+    onClearCanvas();
+    initializeBackground();
+  }, [initializeBackground, onClearCanvas]);
+
+  const onMouseDown = useCallback((event: MouseEvent<HTMLCanvasElement>) => {
     startDrawing(event.nativeEvent.offsetX, event.nativeEvent.offsetY);
-  };
+  }, [startDrawing]);
 
-  const onMouseMove = (event: MouseEvent<HTMLCanvasElement>) => {
+  const onMouseMove = useCallback((event: MouseEvent<HTMLCanvasElement>) => {
     continueDrawing(event.nativeEvent.offsetX, event.nativeEvent.offsetY);
-  };
+  }, [continueDrawing]);
 
-  const onTouchStart = (event: TouchEvent<HTMLCanvasElement>) => {
-    event.preventDefault(); // Prevent default scrolling behavior
+  const onTouchStart = useCallback((event: TouchEvent<HTMLCanvasElement>) => {
+    event.preventDefault();
     const touch = event.touches[0];
     const rect = canvasRef.current!.getBoundingClientRect();
     const x = touch.clientX - rect.left;
     const y = touch.clientY - rect.top;
     startDrawing(x, y);
-  };
+  }, [startDrawing]);
 
-  const onTouchMove = (event: TouchEvent<HTMLCanvasElement>) => {
-    event.preventDefault(); // Prevent default scrolling behavior
+  const onTouchMove = useCallback((event: TouchEvent<HTMLCanvasElement>) => {
+    event.preventDefault();
     const touch = event.touches[0];
     const rect = canvasRef.current!.getBoundingClientRect();
     const x = touch.clientX - rect.left;
     const y = touch.clientY - rect.top;
     continueDrawing(x, y);
-  };
+  }, [continueDrawing]);
 
   return (
     <div className='flex flex-col gap-3'>
@@ -111,39 +168,78 @@ export default function Canvas({
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={stopDrawing}
-        className='rounded-xl border border-gray-200'
+        className={`rounded-xl border border-gray-200 max-w-[${width}px]`}
       />
-      <div className='flex flex-row items-center gap-3 text-sm lg:p-0 p-4'>
-        <div className='flex flex-row items-center'>
-          <label htmlFor="brushColor">Brush Color:</label>
-          <input
-            type="color"
-            id="brushColor"
-            value={brushColor}
-            onChange={(e) => setBrushColor(e.target.value)}
-            style={{ width: '25px', height: '30px', background: 'none', border: 'none !important', outline: 'none !important'}}
-            className='text-sm'
-          />
-        </div>
-
-        <div className='flex flex-row items-center gap-1 text-sm'>
-          <label htmlFor="brushSize">Brush Size:</label>
-          <input
-            type="range"
-            id="brushSize"
-            min="1"
-            max="100"
-            value={brushSize}
-            onChange={(e) => setBrushSize(parseInt(e.target.value))}
-          />
-        </div>
-
-        <button 
-          className='bg-slate-400 text-white text-sm p-2 w-32 font-semibold rounded-full' 
-          onClick={clearCanvas}
+      <div className='lg:p-0 p-3'>
+        <div 
+          className='
+          flex 
+          flex-row 
+          items-center 
+          justify-between 
+          gap-3 
+          text-sm 
+          lg:p-1 
+          lg:pl-6
+          lg:pr-6 
+          pt-1
+          pb-1
+          pl-6
+          pr-6
+          border 
+          border-gray-100 
+          rounded-full 
+          w-full 
+          shadow
+          text-gray-700
+          '
         >
-          Clear Canvas
-        </button>
+          <div className='flex flex-row gap-1 items-center'>
+            <label htmlFor="brushColor">Color </label>
+            <input
+              type="color"
+              id="brushColor"
+              value={brushColor}
+              onChange={(e) => setBrushColor(e.target.value)}
+              style={{ width: '20px', height: '24px', background: 'none', border: 'none !important', outline: 'none !important'}}
+              className='text-sm'
+            />
+          </div>
+
+          <div className='flex flex-row items-center gap-2 text-sm'>
+            <label htmlFor="brushSize">Size</label>
+            <Box sx={{ width: 70, display: "flex", alignItems: "center" }}>
+              <Slider
+                size="small"
+                min={1}
+                step={1}
+                max={100}
+                valueLabelDisplay="off"
+                defaultValue={50}
+                value={brushSize}
+                aria-label=""
+                onChange={(e, value) => setBrushSize(value as number)}
+              />
+            </Box>
+          </div>
+          <div className='flex flex-row gap-6'>
+            <button className='' onClick={undo}>
+              <MdUndo />
+            </button>
+            <button className='' onClick={redo}>
+              <MdOutlineRedo />
+            </button>
+          </div>
+
+          <button 
+            // className='bg-slate-400 text-white text-sm p-2 w-32 font-semibold rounded-full'
+            className='hover:text-black transition-colors duration-100 ease-in-out '
+            onClick={clearCanvas}
+          >
+            Clear
+          </button>
+          
+        </div>
       </div>
     </div>
   );
