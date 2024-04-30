@@ -128,7 +128,8 @@ export default function Canvas({
   const clearCanvas = useCallback(() => {
     onClearCanvas();
     initializeBackground();
-  }, [initializeBackground, onClearCanvas]);
+    saveToHistory();
+  }, [initializeBackground, onClearCanvas, saveToHistory]);
 
   const onMouseDown = useCallback((event: MouseEvent<HTMLCanvasElement>) => {
     startDrawing(event.nativeEvent.offsetX, event.nativeEvent.offsetY);
@@ -157,7 +158,7 @@ export default function Canvas({
   }, [continueDrawing]);
 
   return (
-    <div className='flex flex-col gap-3'>
+    <div className='flex flex-col items-center gap-3'>
       <canvas
         ref={canvasRef}
         width={width}
@@ -168,7 +169,7 @@ export default function Canvas({
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={stopDrawing}
-        className={`rounded-xl border border-gray-200 max-w-[${width}px]`}
+        className={`rounded-xl border border-gray-200 lg:w-[420px] lg:h-[420px] w-[350px] h-[350px]`}
       />
       <div className='lg:p-0 p-3'>
         <div 
@@ -201,7 +202,7 @@ export default function Canvas({
               id="brushColor"
               value={brushColor}
               onChange={(e) => setBrushColor(e.target.value)}
-              style={{ width: '20px', height: '24px', background: 'none', border: 'none !important', outline: 'none !important'}}
+              style={{ width: '20px', height: '24px', background: 'none', border: 'none !important', outline: 'none !important', borderRadius: '50%'}}
               className='text-sm'
             />
           </div>
@@ -232,7 +233,6 @@ export default function Canvas({
           </div>
 
           <button 
-            // className='bg-slate-400 text-white text-sm p-2 w-32 font-semibold rounded-full'
             className='hover:text-black transition-colors duration-100 ease-in-out '
             onClick={clearCanvas}
           >

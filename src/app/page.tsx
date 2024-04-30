@@ -1,15 +1,16 @@
 "use client"
-import { useState, TouchEvent } from 'react';
+import { useState, useEffect } from 'react';
 import Canvas from './components/Canvas';
 import MintForm from './components/MintForm';
 import axios from 'axios';
 import { useAccount, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import { abi } from '../../lib/abi/abi';
-// import { type WriteContractReturnType } from '@wagmi/core'
+import toast, { Toaster } from 'react-hot-toast';
 
 export interface IFormData {
   name: string;
   description: string;
+  isMinting: boolean;
   isPending: boolean;
   hash: string | null;
   isConfirming: boolean;
@@ -22,14 +23,11 @@ export default function Home() {
 
   const [brushColor, setBrushColor] = useState('#000000');
   const [brushSize, setBrushSize] = useState(10);
-
-  let windowWidth = 0;
-  if (typeof window !== "undefined") {
-    windowWidth = window.innerWidth;
-  }
-  // Width and height of the canvas (it's a square canvas)
-  const CANVAS_SIZE = windowWidth < 450 ? 373 : 450;
-  const NFT_CONTRACT_ADDRESS = '0xCb32931000319F4d6183B3e5D5940e997e2caF14';
+  const [isMinting, setIsMinting] = useState(false);
+  const [formData, setFormData] = useState<any>({
+    name: '',
+    description: '',
+  });
 
   const { 
     data: hash,
@@ -38,20 +36,29 @@ export default function Home() {
     writeContract 
   } = useWriteContract()
 
+  let windowWidth = 0;
+  if (typeof window !== "undefined") {
+    windowWidth = window.innerWidth;
+  }
+  // Width and height of the canvas (it's a square canvas)
+  let CANVAS_SIZE:number = 600;
+  
+  // if (windowWidth) {
+  //   CANVAS_SIZE = windowWidth >= 450 ? 450 : 370;
+  // }
+
+  const NFT_CONTRACT_ADDRESS = '0xCb32931000319F4d6183B3e5D5940e997e2caF14';
+
   const { isLoading: isConfirming, isSuccess: isConfirmed } = 
     useWaitForTransactionReceipt({ 
       hash, 
-    }) 
+    })
 
-  // Using a single state object for form and transaction status
-  const [formData, setFormData] = useState<any>({
-    name: '',
-    description: '',
-  });
-
-  // const handleTouchDraw = (event: React.TouchEvent<HTMLDivElement>) => {
-  //   event.preventDefault(); // Prevent touch-related scrolling
-  // };
+  useEffect(() => {
+    if (isConfirmed) {
+      toast.success('Successfully minted NFT');
+    } 
+  }, [isConfirmed]);
 
   const handleFormChange = (e: any) => {
     const { name, value } = e.target;
@@ -61,62 +68,71 @@ export default function Home() {
     }));
   };
 
-  // Function to get canvas content as data URL
-  // const getCanvasImage = () => {
-  //   const canvas = canvasRef.current;
-  //   return canvas ? canvas.toDataURL("image/png") : "";
-  // };
-
   const mintImage = async () => {
-    console.log('Minting image...');
-    const imageData = document.querySelector('canvas')?.toDataURL("image/png");
-    if (!imageData) return;
+    console.log('mintImage called');
+    const canvas = document.querySelector('canvas');
+    if (!canvas) {
+      toast.error('Canvas not found');
+      return;
+    }
+
+    const imageData = canvas.toDataURL("image/png");
     const base64Data = imageData.split(",")[1];
 
     if (!address) {
+      toast.error('No address provided');
       return;
     }
-
-    let ipfsHash = '';
+    if (!formData.name || !formData.description) {
+      toast.error('Missing name or description');
+      return;
+    }
+    console.log('Minting image...');
+    const toastId = toast.loading('Minting NFT...');
     try {
-      const response = await axios.post(
-        "/api/imageStorage",
-        { 
-          image: base64Data,
-          name: formData.name,
-          description: formData.description,
+      const response = await axios.post("/api/imageStorage", {
+        image: base64Data,
+        name: formData.name,
+        description: formData.description,
+      }, {
+        headers: {
+          "Content-Type": "application/json",
         },
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-      ipfsHash = response.data.ipfsHash;
-      console.log("Image stored successfully:", response.data);
-    } catch (err) {
-
-      console.log('Error storing image:', err);
-      return;
-    }
-
-    try {
-      const tx = await writeContract({
-        abi,
-        address: NFT_CONTRACT_ADDRESS,
-        functionName: 'safeMint',
-        args: [address, `ipfs://${ipfsHash}`],
       });
 
-      console.log('Transaction initiated:', tx);
+      console.log("Image stored successfully:", response.data);
+      const ipfsHash = response.data.ipfsHash;
+
+      try {
+        const tx = await writeContract({
+          abi,
+          address: NFT_CONTRACT_ADDRESS,
+          functionName: 'safeMint',
+          args: [address, `ipfs://${ipfsHash}`],
+        });
+
+        console.log('Transaction initiated:', tx);
+
+        
+      } catch (err: any) {
+      
+        console.error('Error executing writeContract:', err);
+        toast.error('Error during contract execution');
+      }
     } catch (err: any) {
-      console.log('Error executing writeContract:', err);
+      console.error('Error storing image:', err);
+      
+      toast.error('Failed to store image');
+    } finally {
+      toast.dismiss(toastId);
+      setIsMinting(false);
     }
   };
 
   return (
-    <main className='pt-8 pb-4 flex flex-col items-center font-inter text-sm'>
-      <div className='flex flex-col items-center lg:p-10 pt-5 lg:w-4/5 w-full bg-white relative rounded-3xl'>
+    <main className='pt-6 pb-4 flex flex-col items-center font-inter text-sm'>
+      <Toaster />
+      <div className='flex flex-col items-center lg:p-10 pt-5 pl-1 pr-1 lg:w-9/12 w-full bg-white relative rounded-3xl'>
         <div className='absolute top-4 right-4'>
           <w3m-button />
         </div>
@@ -124,7 +140,7 @@ export default function Home() {
         <div className='flex flex-col gap-3'>
           <div className='lg:p-0 p-5'>
             <div className='text-sm mb-6 italic'>
-              @PaintOnBase 🎨
+              @BaseBrush 🎨
             </div>
             <h1 className='text-2xl font-semibold mb-2'>Create an NFT</h1>
             <p className='text-sm'>Once the item is minted, you will be able to see it on OpenSea</p>
@@ -150,6 +166,7 @@ export default function Home() {
                 formData={formData}
                 handleFormChange={handleFormChange}
                 mintImage={mintImage}
+                isMinting={isMinting}
                 isPending={isPending}
                 hash={hash}
                 isConfirming={isConfirming}
@@ -160,11 +177,10 @@ export default function Home() {
             
           </div>
         </div>
-        <div className=' h-6'></div>
+        <div className='h-2'></div>
         
       </div>
-      <div className=' h-6'>
-      </div>
+      <div className=' h-6'></div>
 
       {/* <div className='flex flex-col items-center lg:p-16 pt-5 lg:w-4/5 w-full bg-white relative rounded-2xl'>
       <div>
