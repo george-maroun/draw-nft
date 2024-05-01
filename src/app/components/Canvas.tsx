@@ -132,30 +132,44 @@ export default function Canvas({
   }, [initializeBackground, onClearCanvas, saveToHistory]);
 
   const onMouseDown = useCallback((event: MouseEvent<HTMLCanvasElement>) => {
-    startDrawing(event.nativeEvent.offsetX, event.nativeEvent.offsetY);
-  }, [startDrawing]);
-
-  const onMouseMove = useCallback((event: MouseEvent<HTMLCanvasElement>) => {
-    continueDrawing(event.nativeEvent.offsetX, event.nativeEvent.offsetY);
-  }, [continueDrawing]);
-
-  const onTouchStart = useCallback((event: TouchEvent<HTMLCanvasElement>) => {
-    event.preventDefault();
-    const touch = event.touches[0];
     const rect = canvasRef.current!.getBoundingClientRect();
-    const x = touch.clientX - rect.left;
-    const y = touch.clientY - rect.top;
+    const scaleX = canvasRef.current!.width / rect.width; // scaling factor for width
+    const scaleY = canvasRef.current!.height / rect.height; // scaling factor for height
+    const x = (event.nativeEvent.offsetX * scaleX); // scale mouse coordinates after they have
+    const y = (event.nativeEvent.offsetY * scaleY); // been adjusted to be relative to element
     startDrawing(x, y);
-  }, [startDrawing]);
+}, [startDrawing]);
 
-  const onTouchMove = useCallback((event: TouchEvent<HTMLCanvasElement>) => {
+const onMouseMove = useCallback((event: MouseEvent<HTMLCanvasElement>) => {
+    const rect = canvasRef.current!.getBoundingClientRect();
+    const scaleX = canvasRef.current!.width / rect.width;
+    const scaleY = canvasRef.current!.height / rect.height;
+    const x = (event.nativeEvent.offsetX * scaleX);
+    const y = (event.nativeEvent.offsetY * scaleY);
+    continueDrawing(x, y);
+}, [continueDrawing]);
+
+const onTouchStart = useCallback((event: TouchEvent<HTMLCanvasElement>) => {
     event.preventDefault();
     const touch = event.touches[0];
     const rect = canvasRef.current!.getBoundingClientRect();
-    const x = touch.clientX - rect.left;
-    const y = touch.clientY - rect.top;
+    const scaleX = canvasRef.current!.width / rect.width;
+    const scaleY = canvasRef.current!.height / rect.height;
+    const x = (touch.clientX - rect.left) * scaleX;
+    const y = (touch.clientY - rect.top) * scaleY;
+    startDrawing(x, y);
+}, [startDrawing]);
+
+const onTouchMove = useCallback((event: TouchEvent<HTMLCanvasElement>) => {
+    event.preventDefault();
+    const touch = event.touches[0];
+    const rect = canvasRef.current!.getBoundingClientRect();
+    const scaleX = canvasRef.current!.width / rect.width;
+    const scaleY = canvasRef.current!.height / rect.height;
+    const x = (touch.clientX - rect.left) * scaleX;
+    const y = (touch.clientY - rect.top) * scaleY;
     continueDrawing(x, y);
-  }, [continueDrawing]);
+}, [continueDrawing]);
 
   return (
     <div className='flex flex-col items-center gap-3'>
@@ -169,7 +183,7 @@ export default function Canvas({
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={stopDrawing}
-        className={`rounded-xl border border-gray-200 lg:w-[420px] lg:h-[420px] w-[350px] h-[350px]`}
+        className={`rounded-xl border border-gray-200 lg:w-[420px] lg:h-[420px] w-[330px] h-[330px]`}
       />
       <div className='lg:p-0 p-3'>
         <div 
@@ -190,13 +204,14 @@ export default function Canvas({
           border 
           border-gray-100 
           rounded-full 
-          w-full 
+          lg:w-[420px]
+          w-[330px]
           shadow
           text-gray-700
           '
         >
           <div className='flex flex-row gap-1 items-center'>
-            <label htmlFor="brushColor">Color </label>
+            <label htmlFor="brushColor">Color</label>
             <input
               type="color"
               id="brushColor"
