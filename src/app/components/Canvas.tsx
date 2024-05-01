@@ -13,6 +13,7 @@ interface CanvasProps {
   setBrushSize: (size: number) => void;
   onClearCanvas: () => void;
   containerRef: React.RefObject<HTMLDivElement>; // Add this line
+  setIsTouchingCanvas: (isTouchingCanvas: boolean) => void;
 }
 
 export default function Canvas({
@@ -24,6 +25,7 @@ export default function Canvas({
   setBrushSize,
   onClearCanvas,
   containerRef,
+  setIsTouchingCanvas,
 }: CanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const drawing = useRef(false); // Use useRef to avoid re-renders
@@ -67,6 +69,28 @@ export default function Canvas({
       setHistoryIndex(0);
     }
   }, [initializeBackground, getContext]);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+
+    const onTouchMove = (event:any) => {
+      event.preventDefault();  // Prevent scrolling on touch move
+      // additional logic to handle touch move
+    };
+
+    // Add event listener when the component mounts
+    if (canvas) {
+      canvas.addEventListener('touchmove', onTouchMove, { passive: false });
+    }
+
+    // Cleanup function to remove event listener
+    return () => {
+      if (canvas) {
+        canvas.removeEventListener('touchmove', onTouchMove);
+      }
+    };
+  }, []); 
+
 
   const drawLine = useCallback((x1:number, y1:number, x2:number, y2:number) => {
     const ctx = getContext();
@@ -153,7 +177,7 @@ const onMouseMove = useCallback((event: MouseEvent<HTMLCanvasElement>) => {
 }, [continueDrawing]);
 
 const onTouchStart = useCallback((event: TouchEvent<HTMLCanvasElement>) => {
-    event.preventDefault();
+    // event.preventDefault();
     const touch = event.touches[0];
     const rect = canvasRef.current!.getBoundingClientRect();
     const scaleX = canvasRef.current!.width / rect.width;
@@ -161,7 +185,8 @@ const onTouchStart = useCallback((event: TouchEvent<HTMLCanvasElement>) => {
     const x = (touch.clientX - rect.left) * scaleX;
     const y = (touch.clientY - rect.top) * scaleY;
     startDrawing(x, y);
-}, [startDrawing]);
+    setIsTouchingCanvas(true);
+}, [startDrawing, setIsTouchingCanvas]);
 
 const onTouchMove = useCallback((event: TouchEvent<HTMLCanvasElement>) => {
     event.preventDefault();
@@ -174,6 +199,12 @@ const onTouchMove = useCallback((event: TouchEvent<HTMLCanvasElement>) => {
     continueDrawing(x, y);
 }, [continueDrawing]);
 
+const onTouchEnd = useCallback((event: TouchEvent<HTMLCanvasElement>) => {
+  // event.preventDefault();
+  stopDrawing();
+  setIsTouchingCanvas(false); // Set isTouchingCanvas to false when touch ends on canvas
+}, [stopDrawing, setIsTouchingCanvas]);
+
   return (
     <div className='flex flex-col items-center gap-3' ref={containerRef}>
       <canvas
@@ -185,7 +216,7 @@ const onTouchMove = useCallback((event: TouchEvent<HTMLCanvasElement>) => {
         onMouseUp={stopDrawing}
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
-        onTouchEnd={stopDrawing}
+        onTouchEnd={onTouchEnd}
         className={`rounded-xl border border-gray-200 lg:w-[420px] lg:h-[420px] w-[330px] h-[330px] touch-action-none`}
       />
       <div className='lg:p-0 p-3'>

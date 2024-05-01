@@ -7,6 +7,11 @@ import { useAccount, useWriteContract, useWaitForTransactionReceipt } from 'wagm
 import { abi } from '../../lib/abi/abi';
 import toast, { Toaster } from 'react-hot-toast';
 import Overlay from './components/Overlay';
+import { SiFarcaster } from "react-icons/si";
+import { SiOpensea } from "react-icons/si";
+import { FaEthereum } from "react-icons/fa";
+
+// import { FaXTwitter } from "react-icons/fa6";
 
 export interface IFormData {
   name: string;
@@ -32,6 +37,8 @@ export default function Home() {
     description: '',
   });
 
+  const [isTouchingCanvas, setIsTouchingCanvas] = useState(false);
+
   const { 
     data: hash,
     error, 
@@ -47,22 +54,22 @@ export default function Home() {
   const containerRef = useRef(null);
 
   useEffect(() => {
-    const container:any = containerRef.current;
-
     const handleTouchMove = (event:any) => {
-      event.preventDefault();
-    };
-
-    if (container) {
-      container.addEventListener('touchmove', handleTouchMove, { passive: false });
-    }
-
-    return () => {
-      if (container) {
-        container.removeEventListener('touchmove', handleTouchMove);
+      if (isTouchingCanvas) {
+        event.preventDefault();
       }
     };
-  }, []);
+  
+    // Adding event listener
+    document.addEventListener('touchmove', handleTouchMove, { passive: false });
+  
+    return () => {
+      // Removing event listener
+      document.removeEventListener('touchmove', handleTouchMove);
+    };
+  }, [isTouchingCanvas]); 
+
+  console.log({isTouchingCanvas})
 
   const { isLoading: isConfirming, isSuccess: isConfirmed } = 
     useWaitForTransactionReceipt({ 
@@ -167,7 +174,7 @@ export default function Home() {
         <div className='flex flex-col gap-3'>
           <div className='lg:p-0 p-5 pt-4'>
             <div className='text-sm mb-6 italic'>
-              @BaseBrush 🎨
+              @ B a s e B r u s h  🎨
             </div>
             <h1 className='text-2xl font-semibold mt-1 mb-2'>Create an NFT</h1>
             <p className='text-sm'>Once the item is minted, you will be able to see it on OpenSea</p>
@@ -187,8 +194,9 @@ export default function Home() {
                 }
               }}
               containerRef={containerRef}
+              setIsTouchingCanvas={setIsTouchingCanvas}
             />
-            <div className='lg:p-0 p-5 pt-0 lg:pt-0'>
+            <div className='lg:p-0 p-5 pt-0 lg:pt-0 '>
               <MintForm
                 address={address}
                 formData={formData}
@@ -201,11 +209,24 @@ export default function Home() {
                 isConfirmed={isConfirmed}
                 error={error}
               />
+
+              
             </div>
             
           </div>
         </div>
-        <div className='h-2'></div>
+        {/* <div className='h-2'></div> */}
+        <div className='h-4'></div>
+        {/* Horizontal line */}
+        {/* <div className='border-b border-gray-200 w-full'></div> */}
+        {/* <div className='flex flex-row items-end'>
+          <div className='flex flex-row gap-4'>
+            <div className='flex items-center gap-1'><FaEthereum/> BaseScan</div>
+            <div className='flex items-center gap-1'><SiFarcaster/> Farcaster</div>
+            <div className='flex items-center gap-1'><SiOpensea/> OpenSea</div>
+          </div>
+        </div> */}
+
         
       </div>
       <div className=' h-6'></div>
