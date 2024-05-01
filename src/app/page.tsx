@@ -1,5 +1,5 @@
 "use client"
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Canvas from './components/Canvas';
 import MintForm from './components/MintForm';
 import axios from 'axios';
@@ -43,6 +43,26 @@ export default function Home() {
   let CANVAS_SIZE:number = 600;
 
   const NFT_CONTRACT_ADDRESS = '0xCb32931000319F4d6183B3e5D5940e997e2caF14';
+
+  const containerRef = useRef(null);
+
+  useEffect(() => {
+    const container:any = containerRef.current;
+
+    const handleTouchMove = (event:any) => {
+      event.preventDefault();
+    };
+
+    if (container) {
+      container.addEventListener('touchmove', handleTouchMove, { passive: false });
+    }
+
+    return () => {
+      if (container) {
+        container.removeEventListener('touchmove', handleTouchMove);
+      }
+    };
+  }, []);
 
   const { isLoading: isConfirming, isSuccess: isConfirmed } = 
     useWaitForTransactionReceipt({ 
@@ -128,7 +148,7 @@ export default function Home() {
   };
 
   return (
-    <main className='pt-6 pb-4 flex flex-col items-center font-inter text-sm pl-2 pr-2'>
+    <main className='pt-6 pb-4 flex flex-col items-center font-inter text-sm pl-1 pr-1' ref={containerRef}>
       <Toaster />
 
       {showOverlay && 
@@ -139,13 +159,13 @@ export default function Home() {
           onClose={closeOverlay} 
         />}
 
-      <div className='z-10 flex flex-col items-center lg:p-10 lg:pl-16 lg:pr-16 lg:pt-5 pt-4 lg:w-auto md:w-8/12 w-full bg-white relative rounded-3xl'>
-        <div className='absolute top-4 right-4'>
+      <div className='z-10 flex flex-col items-center lg:p-10 lg:pl-16 lg:pr-16 lg:pt-7 pt-4 lg:w-auto md:w-8/12 w-full bg-white relative rounded-3xl'>
+        <div className='absolute lg:right-10 top-6 right-4'>
           <w3m-button />
         </div>
         
         <div className='flex flex-col gap-3'>
-          <div className='lg:p-0 p-5 pt-2'>
+          <div className='lg:p-0 p-5 pt-4'>
             <div className='text-sm mb-6 italic'>
               @BaseBrush 🎨
             </div>
@@ -166,6 +186,7 @@ export default function Home() {
                   ctx.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
                 }
               }}
+              containerRef={containerRef}
             />
             <div className='lg:p-0 p-5 pt-0 lg:pt-0'>
               <MintForm

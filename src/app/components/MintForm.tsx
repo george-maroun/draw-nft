@@ -57,7 +57,7 @@ export default function MintForm({
           name="name"
           value={formData.name}
           onChange={handleFormChange}
-          placeholder='Name your NFT...'
+          placeholder='Name your NFT'
           className="border p-2 rounded-lg lg:w-80 lg:max-w-80 w-full border-gray-200 focus:border-slate-200"
         />
       </div>

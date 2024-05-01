@@ -3,6 +3,7 @@ import Slider from '@mui/material/Slider';
 import Box from '@mui/material/Box';
 import { MdUndo, MdOutlineRedo } from "react-icons/md";
 
+
 interface CanvasProps {
   width: number;
   height: number;
@@ -11,6 +12,7 @@ interface CanvasProps {
   brushSize: number;
   setBrushSize: (size: number) => void;
   onClearCanvas: () => void;
+  containerRef: React.RefObject<HTMLDivElement>; // Add this line
 }
 
 export default function Canvas({
@@ -21,6 +23,7 @@ export default function Canvas({
   brushSize,
   setBrushSize,
   onClearCanvas,
+  containerRef,
 }: CanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const drawing = useRef(false); // Use useRef to avoid re-renders
@@ -172,7 +175,7 @@ const onTouchMove = useCallback((event: TouchEvent<HTMLCanvasElement>) => {
 }, [continueDrawing]);
 
   return (
-    <div className='flex flex-col items-center gap-3'>
+    <div className='flex flex-col items-center gap-3' ref={containerRef}>
       <canvas
         ref={canvasRef}
         width={width}
@@ -183,7 +186,7 @@ const onTouchMove = useCallback((event: TouchEvent<HTMLCanvasElement>) => {
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={stopDrawing}
-        className={`rounded-xl border border-gray-200 lg:w-[420px] lg:h-[420px] w-[330px] h-[330px]`}
+        className={`rounded-xl border border-gray-200 lg:w-[420px] lg:h-[420px] w-[330px] h-[330px] touch-action-none`}
       />
       <div className='lg:p-0 p-3'>
         <div 
