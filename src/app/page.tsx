@@ -28,8 +28,8 @@ export default function Home() {
   const [brushSize, setBrushSize] = useState(10);
   const [isMinting, setIsMinting] = useState(false);
   const [formData, setFormData] = useState<any>({
-    name: '',
-    description: '',
+    name: 'Meow',
+    description: 'A cat in a box',
   });
 
   const { 
@@ -133,6 +133,7 @@ export default function Home() {
 
       {showOverlay && 
         <Overlay 
+          nftData={formData}
           imageUrl={mintedImageUrl} 
           collectionAddress={NFT_CONTRACT_ADDRESS} 
           onClose={closeOverlay} 
