@@ -21,15 +21,15 @@ export interface IFormData {
 
 export default function Home() {
   const { address } = useAccount();
-  const [showOverlay, setShowOverlay] = useState(true);
-  const [mintedImageUrl, setMintedImageUrl] = useState('https://lavender-advisory-lamprey-101.mypinata.cloud/ipfs/QmcxJGu2nWQmFjpUKpb8uSpV7zCfAiDmsMFxVenF1dUhQP?pinataGatewayToken=OGO627cTrhi3ab3BSo9EdtOTU5KjSvv4o6bYkFWajPLvQf2DYOzHzy9pjAavqN72');
+  const [showOverlay, setShowOverlay] = useState(false);
+  const [mintedImageUrl, setMintedImageUrl] = useState('');
 
   const [brushColor, setBrushColor] = useState('#000000');
   const [brushSize, setBrushSize] = useState(10);
   const [isMinting, setIsMinting] = useState(false);
   const [formData, setFormData] = useState<any>({
-    name: 'Meow',
-    description: 'A cat in a box',
+    name: '',
+    description: '',
   });
 
   const { 
