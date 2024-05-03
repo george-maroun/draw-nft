@@ -177,7 +177,6 @@ const onMouseMove = useCallback((event: MouseEvent<HTMLCanvasElement>) => {
 }, [continueDrawing]);
 
 const onTouchStart = useCallback((event: TouchEvent<HTMLCanvasElement>) => {
-    // event.preventDefault();
     const touch = event.touches[0];
     const rect = canvasRef.current!.getBoundingClientRect();
     const scaleX = canvasRef.current!.width / rect.width;
@@ -200,7 +199,6 @@ const onTouchMove = useCallback((event: TouchEvent<HTMLCanvasElement>) => {
 }, [continueDrawing]);
 
 const onTouchEnd = useCallback((event: TouchEvent<HTMLCanvasElement>) => {
-  // event.preventDefault();
   stopDrawing();
   setIsTouchingCanvas(false); // Set isTouchingCanvas to false when touch ends on canvas
 }, [stopDrawing, setIsTouchingCanvas]);
@@ -251,8 +249,7 @@ const onTouchEnd = useCallback((event: TouchEvent<HTMLCanvasElement>) => {
               id="brushColor"
               value={brushColor}
               onChange={(e) => setBrushColor(e.target.value)}
-              style={{ width: '20px', height: '24px', background: 'none', border: 'none !important', outline: 'none !important', borderRadius: '50%'}}
-              className='text-sm'
+              className='text-sm w-5 lg:h-6 h-5 bg-transparent border-none rounded-full'
             />
           </div>
 

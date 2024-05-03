@@ -26,9 +26,11 @@ export interface IFormData {
 
 export default function Home() {
   const { address } = useAccount();
+  // const [showOverlay, setShowOverlay] = useState(true);
+  // const [mintedImageUrl, setMintedImageUrl] = useState('https://lavender-advisory-lamprey-101.mypinata.cloud/ipfs/QmUBEVhrJpHcUH2iZmoztr8FhcSfjvLBLdL2pLW3mrzfFN?pinataGatewayToken=OGO627cTrhi3ab3BSo9EdtOTU5KjSvv4o6bYkFWajPLvQf2DYOzHzy9pjAavqN72');
+
   const [showOverlay, setShowOverlay] = useState(false);
   const [mintedImageUrl, setMintedImageUrl] = useState('');
-
   const [brushColor, setBrushColor] = useState('#000000');
   const [brushSize, setBrushSize] = useState(10);
   const [isMinting, setIsMinting] = useState(false);
@@ -68,8 +70,6 @@ export default function Home() {
       document.removeEventListener('touchmove', handleTouchMove);
     };
   }, [isTouchingCanvas]); 
-
-  console.log({isTouchingCanvas})
 
   const { isLoading: isConfirming, isSuccess: isConfirmed } = 
     useWaitForTransactionReceipt({ 
@@ -167,15 +167,18 @@ export default function Home() {
         />}
 
       <div className='z-10 flex flex-col items-center lg:p-10 lg:pl-16 lg:pr-16 lg:pt-7 pt-4 lg:w-auto md:w-8/12 w-full bg-white relative rounded-3xl'>
-        <div className='absolute lg:right-10 top-6 right-4'>
+        <div className='absolute lg:right-10 top-7 right-4'>
           <w3m-button />
         </div>
-        
+        <div className='absolute lg:left-16 top-8 left-5'>
+          <div className='text-sm mb-6 italic'>
+            @ B a s e B r u s h  🎨
+          </div>
+        </div>
+
         <div className='flex flex-col gap-3'>
-          <div className='lg:p-0 p-5 pt-4'>
-            <div className='text-sm mb-6 italic'>
-              @ B a s e B r u s h  🎨
-            </div>
+          <div className='lg:p-0 p-5 lg:pt-12 pt-16'>
+            
             <h1 className='text-2xl font-semibold mt-1 mb-2'>Create an NFT</h1>
             <p className='text-sm'>Once the item is minted, you will be able to see it on OpenSea</p>
           </div>

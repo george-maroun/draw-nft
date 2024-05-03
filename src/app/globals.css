@@ -3,15 +3,22 @@
 @tailwind utilities;
 @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@300..700&family=Inter:wght@100..900&family=Kavoon&display=swap');
 
-body {
-  background: linear-gradient(rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.2)), /* 70% opacity */
-             url('../../public/marwin-colinayo-beauty-of-the-countryside.jpg') center/cover no-repeat;
-  background-size: cover; /* Ensures the image covers the entire area */
-  background-position: center; /* Centers the image */
-  background-repeat: no-repeat;
-  padding: 0;
+html, body {
+  height: 100%; /* Ensures at least full viewport height */
   margin: 0;
+  padding: 0;
+}
+
+body {
+  background: linear-gradient(rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.2)), 
+             url('../../public/marwin-colinayo-beauty-of-the-countryside.jpg') no-repeat center center/cover;
+  background-attachment: fixed; /* Optional: makes the background fixed during scroll */
+}
+
+* {
+  box-sizing: border-box; /* Ensures padding and border are included in the width/height */
 }
 
 @layer utilities {
+  /* Utilities layer can include additional custom utilities */
 }
