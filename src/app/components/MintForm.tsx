@@ -2,6 +2,7 @@ import { use, useEffect, useState } from 'react';
 import { type BaseError } from 'wagmi';
 import { IFormData } from '../page';
 import { IoInformationCircleOutline } from "react-icons/io5";
+// import toast from 'react-hot-toast';
 
 export interface IMintFormProps {
   formData: IFormData;
@@ -11,7 +12,7 @@ export interface IMintFormProps {
 
 const Message = ({message, url}: any) => {
   return (
-    <div className='p-3 bg-slate-100 rounded-lg flex flex-row gap-2 items-center mb-2'>
+    <div className='p-3 bg-slate-100 rounded-lg flex flex-row gap-2 items-center mb-2 max-w-80 text-pretty'>
       <IoInformationCircleOutline />
       <div className=''>
         {url ? <a className="text-sky-900" href={url} target='_blank'>{message}</a> : message}
@@ -86,7 +87,6 @@ export default function MintForm({
       {!address && <Message message='Connect your wallet to mint an NFT'/>}
       {hash && <Message message='View transaction on BaseScan' url={`${BASESCAN_URL}${hash}`}/>}
       {isConfirming && <Message message='Waiting for confirmation...'/>}
-      {/* {isConfirmed && <Message message='Transaction confirmed'/>} */}
       {isConfirmed && <Message message='View your NFT on OpenSea' url={OPEN_SEA_URL + address}/>}
       {error && <Message message={`Error: ${(error as BaseError).shortMessage || error.message}`}/>}
       <div className='h-6'></div>
