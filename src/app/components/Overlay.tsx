@@ -7,6 +7,7 @@ import { FaXTwitter } from "react-icons/fa6";
 // TODO: Refactor this pasta code
 
 interface IOverlayProps {
+  address: any;
   nftData: any;
   imageData: string;
   collectionAddress: string;
@@ -14,7 +15,7 @@ interface IOverlayProps {
 }
 
 
-const Overlay = ({ nftData, imageData, collectionAddress, onClose }: IOverlayProps) => {
+const Overlay = ({ address, nftData, imageData, collectionAddress, onClose }: IOverlayProps) => {
   if (typeof window === 'undefined') {
     // Return null or a fallback component for server-side rendering environments
     return null;
@@ -24,13 +25,11 @@ const Overlay = ({ nftData, imageData, collectionAddress, onClose }: IOverlayPro
     <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50 p-4 " onClick={onClose}>
       <div className="bg-white p-5 rounded-2xl z-50 flex flex-col" onClick={e => e.stopPropagation()}>
         <img src={imageData} height={380} width={380} alt="Minted NFT" className="max-w-full max-h-screen border border-gray-200"/>
-        {/* <div className='lg:w-6/12 w-full h-6 pl-4 pr-4 border border-gray-200 rounded-full text-sm font-semibold text-gray-700 hover:bg-gray-100 hover:border-gray-300 flex flex-row items-center justify-center gap-1 mt-4'>
-            hello
-        </div> */}
+
         <div className="flex lg:flex-row flex-col justify-evenly mt-0 lg:gap-2 lg:items-center">
           
           <button 
-            onClick={() => window.open(`https://twitter.com/intent/tweet?url=`, '_blank')}
+            onClick={() => window.open(`https://twitter.com/intent/tweet?text=Just%20minted%20my%20artwork%20on%20https%3A%2F%2Fbasebrush.xyz`, '_blank')}
             className='lg:w-6/12 w-full h-10 pl-4 pr-4 border border-gray-200 rounded-full text-sm font-semibold text-gray-700 hover:bg-gray-100 hover:border-gray-300 flex flex-row items-center justify-center gap-1 mt-4'
           >
             <FaXTwitter/> Share on X
@@ -44,7 +43,7 @@ const Overlay = ({ nftData, imageData, collectionAddress, onClose }: IOverlayPro
           
         </div>
         <button 
-          onClick={() => window.open(`https://testnets.opensea.io/collection/${collectionAddress}`, '_blank')}
+          onClick={() => window.open(`https://opensea.io/${address}`, '_blank')}
           className='h-10 pl-4 pr-4 border border-gray-200 rounded-full text-sm font-semibold text-gray-700 hover:bg-gray-100 hover:border-gray-300 flex flex-row items-center justify-center gap-1 mt-3'
           >
             <SiOpensea/> View on OpenSea

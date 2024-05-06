@@ -4,12 +4,14 @@ import Canvas from './components/Canvas';
 import MintForm from './components/MintForm';
 import axios from 'axios';
 import { useAccount, useWriteContract, useWaitForTransactionReceipt, BaseError } from 'wagmi';
-import { abi } from '../../lib/abi/abi';
+import { abi } from '../../lib/contract/abi';
 import toast, { Toaster } from 'react-hot-toast';
 import Overlay from './components/Overlay';
 import { SiFarcaster } from "react-icons/si";
 import { SiOpensea } from "react-icons/si";
 import { FaEthereum } from "react-icons/fa";
+import { NFT_CONTRACT_ADDRESS } from '../../lib/contract/address';
+import { Analytics } from "@vercel/analytics/react"
 
 export interface IFormData {
   name: string;
@@ -25,7 +27,6 @@ export interface IFormData {
 export default function Home() {
   const { address } = useAccount();
   const [showOverlay, setShowOverlay] = useState(false);
-
   const [mintedImageData, setMintedImageData] = useState('');
   const [brushColor, setBrushColor] = useState('#000000');
   const [brushSize, setBrushSize] = useState(10);
@@ -47,8 +48,6 @@ export default function Home() {
   // Width and height of the canvas (it's a square canvas)
   let CANVAS_SIZE:number = 600;
 
-  const NFT_CONTRACT_ADDRESS = '0xE5E25645468A76949d3D1847cBF4c37e11dDbEd6';
-
   const containerRef = useRef(null);
 
   useEffect(() => {
@@ -65,7 +64,7 @@ export default function Home() {
     };
   }, [isTouchingCanvas]); 
 
-  const { isLoading: isConfirming, isSuccess: isConfirmed } = 
+  const { data: receipt, isLoading: isConfirming, isSuccess: isConfirmed } = 
     useWaitForTransactionReceipt({ 
       hash, 
     });
@@ -134,6 +133,7 @@ export default function Home() {
         image: base64Data,
         name: formData.name,
         description: formData.description,
+        wallet: address,
       }, {
         headers: {
           "Content-Type": "application/json",
@@ -150,7 +150,6 @@ export default function Home() {
           args: [`ipfs://${ipfsHash}`],
         });
 
-        console.log('Transaction initiated:', tx);
       } catch (err: any) {
       
         console.error('Error executing writeContract:', err);
@@ -171,7 +170,8 @@ export default function Home() {
       <Toaster />
 
       {showOverlay && 
-        <Overlay 
+        <Overlay
+          address={address} 
           nftData={formData}
           imageData={mintedImageData} 
           collectionAddress={NFT_CONTRACT_ADDRESS} 
@@ -185,9 +185,13 @@ export default function Home() {
         <div className='absolute lg:left-16 top-8 left-5 mb-6'>
           
           <div className='flex lg:flex-row flex-col lg:gap-6 gap-4'>
-            <div className='text-sm italic'>
+            <a 
+              className='text-sm italic'
+              href='https://opensea.io/collection/basebrush'
+              target='_blank'
+            >
               @ B a s e B r u s h  🎨
-            </div>
+            </a>
           </div>
         </div>
 
@@ -216,6 +220,7 @@ export default function Home() {
             />
             <div className='lg:p-0 p-5 pt-0 lg:pt-0 flex flex-col lg:justify-between'>
               <MintForm
+                contractAddress={NFT_CONTRACT_ADDRESS}
                 address={address}
                 formData={formData}
                 handleFormChange={handleFormChange}
@@ -228,15 +233,27 @@ export default function Home() {
                 error={error}
               />
               <div className='flex flex-row gap-8 lg:justify-end justify-center pr-2 mb-2'>
-                <div className='flex items-center gap-1'>
-                  <FaEthereum style={{color: '#888888'}}/>
-                </div>
-                <div className='flex items-center gap-1'>
-                  <SiFarcaster style={{color: '#888888'}}/>
-                </div>
-                <div className='flex items-center gap-1'>
-                  <SiOpensea style={{color: '#888888'}}/>
-                </div>
+                <a 
+                  className='flex items-center gap-1' 
+                  href='https://basescan.org/address/0x11029CE2D6b077A240019B0593a33D520eAB015b'
+                  target='_blank'
+                  > 
+                  <FaEthereum className='text-gray-500 hover:text-black'/>
+                </a>
+                <a 
+                  className='flex items-center gap-1'
+                  href='https://warpcast.com/'
+                  target='_blank'
+                  >
+                  <SiFarcaster className='text-gray-500 hover:text-black'/>
+                </a>
+                <a 
+                  className='flex items-center gap-1'
+                  href='https://opensea.io/collection/basebrush'
+                  target='_blank'
+                  >
+                  <SiOpensea className='text-gray-500 hover:text-black'/>
+                </a>
               </div>
             </div>
             
@@ -249,7 +266,7 @@ export default function Home() {
       </div>
       <div className=' h-6'></div>
 
-  
+      <Analytics/>
     </main>
   );
 }

@@ -3,6 +3,8 @@ import axios from "axios";
 import FormData from "form-data";
 import { Readable } from "stream";
 import { Buffer } from "buffer";
+import getWalletMintCount from "../../../../lib/helpers/getWalletMintCount";
+export const revalidate = 0;
 
 const JWT = process.env.PINATA_JWT;
 
@@ -58,19 +60,32 @@ const pinStreamToIPFS = async (stream: Readable, fileName: string) => {
 
 // POST handler to upload a base64-encoded image to IPFS
 export async function POST(request: NextRequest) {
+  const { image, name, description, wallet } = await request.json();
+
+  if (!image) {
+    return NextResponse.json({ error: "No image data provided" }, { status: 200 });
+  } else if (!name) {
+    return NextResponse.json({ error: "No name provided" }, { status: 200 });
+  } else if (!description) {
+    return NextResponse.json({ error: "No description provided" }, { status: 200 });
+  }
+
+  let walletMintCount: number = -1;
+
   try {
-    const { image, name, description } = await request.json(); // Extract base64 data from the request body
+    walletMintCount = await getWalletMintCount(wallet);
+  }
+  catch (error) {
+    console.error('Error fetching wallet mint count:', error);
+  }
 
-    if (!image) {
-      return NextResponse.json({ error: "No image data provided" }, { status: 400 });
-    } else if (!name) {
-      return NextResponse.json({ error: "No name provided" }, { status: 400 });
-    } else if (!description) {
-      return NextResponse.json({ error: "No description provided" }, { status: 400 });
-    }
+  if (walletMintCount >= 5) {
+    return NextResponse.json({ error: "Wallet has reached the mint limit" }, { status: 200 });
+  } else if (walletMintCount === -1) {
+    return NextResponse.json({ error: "Error fetching wallet mint count" }, { status: 200 });
+  }
 
-
-    // const base64Data = image.split(",")[1]; // Remove the "data:image/png;base64," prefix if present
+  try {
     const stream = createStreamFromBase64(image);
     
     const fileName = `image-${Math.random().toString(36).substring(2, 16)}.png`; // Create a unique file name

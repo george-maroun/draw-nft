@@ -6,7 +6,7 @@ export const projectId = process.env.NEXT_PUBLIC_PROJECT_ID || '' // WalletConne
 
 
 export const config = createConfig({
-  chains: [baseSepolia],
+  chains: [base],
   connectors: [
     injected(),
     walletConnect({ projectId }),
@@ -15,6 +15,6 @@ export const config = createConfig({
   ],
   transports: {
     // [mainnet.id]: http(),
-    [baseSepolia.id]: http(),
+    [base.id]: http(),
   },
 })

@@ -1,8 +1,7 @@
-import { use, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { type BaseError } from 'wagmi';
 import { IFormData } from '../page';
 import { IoInformationCircleOutline } from "react-icons/io5";
-// import toast from 'react-hot-toast';
 
 export interface IMintFormProps {
   formData: IFormData;
@@ -13,8 +12,8 @@ export interface IMintFormProps {
 const Message = ({message, url}: any) => {
   return (
     <div className='p-3 bg-slate-100 rounded-lg flex flex-row gap-2 items-center mb-2 max-w-80 text-pretty'>
-      <IoInformationCircleOutline />
-      <div className=''>
+      <IoInformationCircleOutline className={url ? "text-sky-900" : "text-slate-600"}/>
+      <div className="text-slate-600">
         {url ? <a className="text-sky-900" href={url} target='_blank'>{message}</a> : message}
       </div>
     </div>
@@ -35,6 +34,20 @@ export default function MintForm({
 }: any) {
 
   const [isDisabled, setIsDisabled] = useState(false);
+  const [walletMintCount, setWalletMintCount] = useState(0);
+
+  useEffect(() => {
+    if (address) {
+      fetch(`/api/walletMintCount?wallet=${address}`)
+        .then((res) => res.json())
+        .then((data) => {
+          setWalletMintCount(data.walletMintCount);
+        })
+        .catch((error) => {
+          console.error('Error fetching wallet mint count:', error);
+        });
+    }
+  }, [address]);
 
   useEffect(() => {
     if (isMinting || !address) {
@@ -45,8 +58,8 @@ export default function MintForm({
     }
   }, [isMinting, address]);
 
-  const OPEN_SEA_URL = 'https://testnets.opensea.io/';
-  const BASESCAN_URL = 'https://sepolia.basescan.org/tx/';
+  const OPEN_SEA_URL = 'https://opensea.io/';
+  const BASESCAN_URL = 'https://basescan.org/tx/';
 
   return (
     <div className="form">
@@ -75,7 +88,7 @@ export default function MintForm({
         />
       </div>
 
-      <div className='flex lg:justify-end justify-center mb-8'>
+      <div className='flex lg:justify-end justify-center mb-8 items-center gap-4'>
         <button 
           className='bg-gradient-to-r from-[#87FF5D] to-[#469BFF] p-2 w-32 text-sm font-semibold rounded-full text-white disabled:opacity-70'
           disabled={isDisabled}
@@ -84,6 +97,7 @@ export default function MintForm({
           {isPending ? 'Minting...' : 'Mint'}
         </button>
       </div>
+      {address && <Message message={walletMintCount + " out of 5 NFTs minted by this wallet"}/>}
       {!address && <Message message='Connect your wallet to mint an NFT'/>}
       {hash && <Message message='View transaction on BaseScan' url={`${BASESCAN_URL}${hash}`}/>}
       {isConfirming && <Message message='Waiting for confirmation...'/>}
